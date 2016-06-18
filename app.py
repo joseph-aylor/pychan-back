@@ -9,7 +9,7 @@ if environ.get("DEBUG"):
 else:
     app.debug = False
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///file.db"
 db = SQLAlchemy(app)
 
 
