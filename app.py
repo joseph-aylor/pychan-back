@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request, abort
 from flask_sqlalchemy import SQLAlchemy
+from flask.ext.cors import CORS, cross_origin
 from os import environ
 from datetime import datetime
 
 app = Flask(__name__)
+CORS(app)
 
 if environ.get("DEBUG"):
     app.debug = environ.get("DEBUG")
@@ -66,6 +68,21 @@ def getBoard(name):
     return response
 
 
+@app.route("/board/<boardshortcut>/post/<postid>", methods=["GET"])
+def viewpost(boardshortcut, postid):
+    # Right now we don't NEED the boardshortcut in the url, but we will
+    # as we shard the boards
+    post = db.session.query(Post).get(postid)
+    response = "Post Not Found", 404
+    if post:
+        post_dict = post.as_dict()
+        replies = post.replies
+        post_dict["replies"] = [reply.as_dict() for reply in replies]
+        response = jsonify(post_dict)
+
+    return response
+
+
 @app.route("/board", methods=["POST"])
 def createBoard():
     board_response = request.get_json()
@@ -92,20 +109,6 @@ def createPost(boardshortcut):
     db.session.commit()
     return jsonify(newpost.as_dict())
 
-
-@app.route("/board/<boardshortcut>/post/<postid>", methods=["GET"])
-def viewpost(boardshortcut, postid):
-    # Right now we don't NEED the boardshortcut in the url, but we will
-    # as we shard the boards
-    post = db.session.query(Post).get(postid)
-    response = "Post Not Found", 404
-    if post:
-        post_dict = post.as_dict()
-        replies = post.replies
-        post_dict["replies"] = [reply.as_dict() for reply in replies]
-        response = jsonify(post_dict)
-
-    return response
 
 if __name__ == "__main__":
     app.run()
